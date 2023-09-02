@@ -34,41 +34,205 @@ def gerar_buffer_randomico(tamanho):
 
 
 
+class TelaQRLink:
+
+    
+
+    def __init__(self, largura, altura):
+
+        self.largura = largura
+        self.altura = altura
+        self.posicionar_elementos()
+
+        self.payload = 512
+        self.qrcode_version = 10 
+        self.box_size = 10       
+
+        self.metricas = MetricasQRLink()
+        self.camera = Camera()
+        self.qr_code_util = QRCodeUtil()
+
+         # Main loop
+        self.running = True
+        
+        self.imagem_qrcode = self.qr_code_util.criar_qrcode(gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
+
+
+        self.tempo_anterior = time.time()
+
+        self.taxa_transferencia = 0
+
+        self.iniciar_pygame()
+
+        self.fonte = pygame.font.Font(None, 36)
 
 
 
 
-metricas = MetricasQRLink()
+    def posicionar_elementos(self):
 
-camera = Camera()
+        # Defina a posição da imagem da câmera e do QR Code
+        self.posicao_camera = (0, 0)  # Superior esquerdo
+        self.posicao_qrcode = ((self.largura // 2)+10, 50)  # Superior direito
+        self.posicao_grafico_dados = (0, self.altura // 2)  # Centro inferior
+        self.posicao_grafico_dados_velocidade = ((self.largura // 2)+10, self.altura // 2)  # Centro inferior
+        self.posicao_texto = ((self.largura // 2)+10, 10)
 
-qr_code_util = QRCodeUtil()
 
 
-payload = 512
+    def iniciar_pygame(self):
+
+        # Initialize pygame
+        pygame.init()
+
+        # Create a window
+        self.tela = pygame.display.set_mode((self.largura, self.altura))
+        pygame.display.set_caption("QR Code and Camera")
+
+
+    def gerar_qrcode(self):
+
+        self.tempo_atual = time.time()
+
+        self.imagem_qrcode = self.qr_code_util.criar_qrcode(gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
+
+
+    def verificar_input_usuario_e_eventos(self):
+
+        for evento in pygame.event.get():
+
+            if evento.type == pygame.QUIT:
+                self.running = False
+
+            elif evento.type == pygame.KEYDOWN:
+
+                if evento.key == pygame.K_UP:
+                    
+                    # Aumenta box_size
+                    self.qrcode_version += 5
+
+                    self.gerar_qrcode()
+                    
+
+                elif evento.key == pygame.K_DOWN:
+
+                    # Diminui qrcode_version (com verificação para garantir que não seja menor que 1)
+                    self.qrcode_version = max(self.qrcode_version - 5, 1)
+
+                    self.gerar_qrcode()
+
+                    
+                elif evento.key == pygame.K_RIGHT:
+
+                    # Aumenta payload em incrementos de 128
+                    self.payload += 128
+
+                    self.gerar_qrcode()
+
+                    
+                elif evento.key == pygame.K_LEFT:
+                    
+                    # Diminui payload em incrementos de 128 (com verificação para garantir que não seja menor que 128)
+                    self.payload = max(self.payload - 128, 128)
+
+                    self.gerar_qrcode()
+
+
+                elif evento.key == pygame.K_SPACE:
+
+                    print (self.metricas.dados_mbps)
 
 
 
-# Initialize pygame
-pygame.init()
+
+    def processar_imagem_camera(self):
+
+        # Capture a frame from the camera
+        frame_camera = self.camera.capturar_frame()
+
+        if frame_camera is not None:
+
+            frame_pygame = pygame.surfarray.make_surface(frame_camera)
+            self.tela.blit(frame_pygame, self.posicao_camera)
+
+            # Tente ler um QR Code da imagem da câmera
+            qr_code_data = self.qr_code_util.ler_qrcode(cv2.cvtColor(frame_camera, cv2.COLOR_RGBA2BGR))
+
+            if qr_code_data:
+                            
+                tamanho = len(qr_code_data)  
+
+                # Calcula a taxa de transferência em Mbps
+                self.tempo_atual = time.time()
+                diferenca_tempo = self.tempo_atual - self.tempo_anterior
+                taxa_transferencia = (tamanho * 8) / (diferenca_tempo * 1000000)  # Mbps                                  
+                self.tempo_anterior = self.tempo_atual
+
+                self.metricas.adicionar_leitura(self.tempo_atual, tamanho, self.qrcode_version)
+
+                #Gera um novo QRCode
+                self.imagem_qrcode = self.qr_code_util.criar_qrcode(gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
+                
+
+
+
+    def rodar(self):
+
+        while self.running:
+
+            
+            self.verificar_input_usuario_e_eventos()
+                        
+
+            # Fill the screen with white color
+            self.tela.fill((0, 0, 0))
+
+
+            texto = \
+                f"Version( {self.qrcode_version} ) - " + \
+                f"Payload( {self.payload} ) - " + \
+                f"Box size( {self.box_size} ) -" + \
+                f"Taxa( {self.taxa_transferencia:.2f} Mbps )"
+
+            texto_pygame = self.fonte.render(texto, True, (255, 255, 255))
+            self.tela.blit(texto_pygame, self.posicao_texto)  # Posição inferior esquerda
+            
+
+            if self.metricas.existem_dados():
+                
+                self.tela.blit(self.metricas.imagem_grafico_dados(), self.posicao_grafico_dados)
+            
+                self.tela.blit(self.metricas.imagem_grafico_medias(), self.posicao_grafico_dados_velocidade)
+            
+
+            self.tela.blit(self.imagem_qrcode, self.posicao_qrcode)
+
+
+            self.processar_imagem_camera()
+
+            # Update the screen
+            pygame.display.flip()
+
+
+        # Release the camera and quit pygame
+        self.camera.release()
+        pygame.quit()
+
+       
+
+
+
+
+
 
 
 
 # Set window dimensions
 largura, altura = 2000, 1000 # Largura dobrada para acomodar ambas as imagens lado a lado
 
-# Create a window
-tela = pygame.display.set_mode((largura, altura))
-pygame.display.set_caption("QR Code and Camera")
+tela = TelaQRLink(largura, altura)
 
-
-
-# Defina a posição da imagem da câmera e do QR Code
-posicao_camera = (0, 0)  # Superior esquerdo
-posicao_qrcode = ((largura // 2)+10, 50)  # Superior direito
-posicao_grafico = (0, altura // 2)  # Centro inferior
-posicao_grafico2 = ((largura // 2)+10, altura // 2)  # Centro inferior
-posicao_texto = ((largura // 2)+10, 10)
+tela.rodar()
 
 
 
@@ -76,127 +240,3 @@ posicao_texto = ((largura // 2)+10, 10)
 
 
 
-qrcode_version = 10
-payload = 512
-
-
-# Main loop
-running = True
-desenhar_qrcode = True
-imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
-
-
-tempo_anterior = time.time()
-taxa_transferencia = 0
-
-fonte = pygame.font.Font(None, 36)
-
-
-while running:
-
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            running = False
-
-        elif evento.type == pygame.KEYDOWN:
-
-            if evento.key == pygame.K_UP:
-                tempo_atual = time.time()
-                
-                # Aumenta box_size
-                qrcode_version += 5
-
-                imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
-                
-            elif evento.key == pygame.K_DOWN:
-                tempo_atual = time.time()
-                # Diminui qrcode_version (com verificação para garantir que não seja menor que 1)
-                qrcode_version = max(qrcode_version - 5, 1)
-
-                imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
-                
-            elif evento.key == pygame.K_RIGHT:
-                tempo_atual = time.time()
-                # Aumenta payload em incrementos de 128
-                payload += 128
-
-                imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
-                
-            elif evento.key == pygame.K_LEFT:
-                tempo_atual = time.time()
-                # Diminui payload em incrementos de 128 (com verificação para garantir que não seja menor que 128)
-                payload = max(payload - 128, 128)
-
-                imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
-
-            elif evento.key == pygame.K_SPACE:
-                print (metricas.dados_mbps)
-                
-      
-
-    # Capture a frame from the camera
-    frame_camera = camera.capturar_frame()
-
-    # Fill the screen with white color
-    tela.fill((255, 255, 255))
-
-
-
-    # Exiba qrcode_version e tamanho do payload
-    texto_qrcode_version = fonte.render(f"qrcode_version: {qrcode_version}", True, (0, 0, 0))
-    tela.blit(texto_qrcode_version, (10, altura - 60))  # Posição inferior esquerda
-    texto_payload = fonte.render(f"Tamanho do Payload: {payload} bytes", True, (0, 0, 0))
-    tela.blit(texto_payload, (largura // 2 + 10, altura - 60))  # Posição inferior direita
-    
-
-    if metricas.existem_dados():
-        
-        tela.blit(metricas.imagem_grafico_dados(), posicao_grafico)
-    
-        tela.blit(metricas.imagem_grafico_medias(), posicao_grafico2)
-
-
-
-
-    # Exiba a taxa de transferência na tela            
-    texto_taxa = fonte.render(f"Taxa de Transferência: {taxa_transferencia:.2f} Mbps", True, (0, 0, 0))
-    tela.blit(texto_taxa, posicao_texto)      
-
-
-
-    # Draw the QR Code and camera frame side by side
-    if desenhar_qrcode:
-        tela.blit(imagem_qrcode, posicao_qrcode)
-
-    if frame_camera is not None:
-
-        frame_pygame = pygame.surfarray.make_surface(frame_camera)
-        tela.blit(frame_pygame, posicao_camera)
-
-        # Tente ler um QR Code da imagem da câmera
-        qr_code_data = qr_code_util.ler_qrcode(cv2.cvtColor(frame_camera, cv2.COLOR_RGBA2BGR))
-
-        if qr_code_data:
-                        
-            tamanho = len(qr_code_data)  
-
-            # Calcula a taxa de transferência em Mbps
-            tempo_atual = time.time()
-            diferenca_tempo = tempo_atual - tempo_anterior
-            taxa_transferencia = (tamanho * 8) / (diferenca_tempo * 1000000)  # Mbps                                  
-            tempo_anterior = tempo_atual
-
-
-            metricas.adicionar_leitura(tempo_atual, tamanho, qrcode_version)
-
-
-            #Gera um novo QRCode
-            imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version) 
-            
-
-    # Update the screen
-    pygame.display.flip()
-
-# Release the camera and quit pygame
-camera.release()
-pygame.quit()

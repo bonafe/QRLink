@@ -17,13 +17,13 @@ class QRCodeUtil:
 
 
 
-    def criar_qrcode(self, conteudo, qrcode_version):
+    def criar_qrcode(self, conteudo, qrcode_version, box_size):
 
         qr = qrcode.QRCode(
             version=qrcode_version,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=5,
-            border=4,
+            box_size=box_size,
+            border=10,
         )
         qr.add_data(conteudo)
         qr.make(fit=True)
