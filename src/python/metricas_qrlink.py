@@ -1,21 +1,38 @@
 
 
+# Importa as bibliotecas necessárias
+# Explica o que cada biblioteca faz:
+
+# matplotlib.pyplot: biblioteca para plotar gráficos
 import matplotlib.pyplot as plt
+
+import matplotlib.animation as animation
+
+# matplotlib.backends.backend_agg.FigureCanvasAgg: biblioteca para renderizar gráficos
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+# pandas: biblioteca para manipulação de dados
 import pandas as pd
+
+# numpy: biblioteca para manipulação de matrizes
 import numpy as np
+
+# pygame: biblioteca para criar interfaces gráficas
 import pygame
 
+
+
+# Classe para armazenar e plotar as métricas do QRLink
 class MetricasQRLink:
   
 
-
+  # Construtor da classe: inicializa as variáveis e cria os gráficos
   def __init__(self) -> None:
      
-    self.lista = []
-    self.dados = pd.DataFrame(columns=['Tempo', 'Payload', 'QRCode Mode'])
-
     
+    self.dados = {'Tempo': [], 'Payload': [], 'QRCode Mode': []}
+    
+
     plt.rcParams['axes.grid'] = True
 
 
@@ -25,6 +42,8 @@ class MetricasQRLink:
     self.ax_dados.set_xlabel('Tempo')
     self.ax_dados.set_ylabel('Payload')
 
+    # Plota o gráfico        
+    self.grafico_linha_dados = self.ax_dados.plot(self.dados['Tempo'], self.dados['Payload'], marker='o', linestyle='-')[0]
 
     self.fig_media_velocidade, self.ax_media_velocidade = plt.subplots(figsize=(8, 4))
     self.canvas_media_velocidade = FigureCanvas(self.fig_media_velocidade)
@@ -37,18 +56,24 @@ class MetricasQRLink:
 
   def adicionar_leitura(self, tempo, payload, qrcode_version):
     
-    #Adiciona nova leitura ao dataframe
-    self.lista.append({'Tempo': tempo, 'Payload': payload, 'QRCode Mode': qrcode_version})
+    print (f'Adicionando leitura: {tempo} --- Payload: {payload} --- QRCode Mode: {qrcode_version}')
+
+    self.dados['Tempo'].append(tempo)
+    self.dados['Payload'].append(payload)
+    self.dados['QRCode Mode'].append(qrcode_version)
+
 
 
 
 
   def imagem_grafico_dados(self):
 
-    # Plota o gráfico    
-    self.dados = pd.DataFrame(self.lista)
-    self.ax_dados.plot(self.dados['Tempo'], self.dados['Payload'], marker='o', linestyle='-')    
-    
+    self.grafico_linha_dados.set_xdata(self.dados['Tempo'])
+    self.grafico_linha_dados.set_ydata(self.dados['Payload']) 
+
+    self.grafico_linha_dados.axes.relim()
+    self.grafico_linha_dados.axes.autoscale_view()    
+
     # Atualiza o gráfico no pygame
     self.canvas_dados.draw()
     renderer = self.canvas_dados.get_renderer()
@@ -63,10 +88,12 @@ class MetricasQRLink:
 
   def imagem_grafico_medias(self):
 
-    dados_mbps = self.gerar_dataframe_medias()
+    return self.imagem_grafico_dados()    
+
+    self.dados_mbps = self.gerar_dataframe_medias()
 
     # Plota o gráfico
-    self.ax_media_velocidade.plot(dados_mbps['Tempo'], dados_mbps['Média Mbps'], marker='o', linestyle='-')
+    self.ax_media_velocidade.plot(self.dados_mbps['Tempo'], self.dados_mbps['Média Mbps'], marker='o', linestyle='-')
 
     # Atualiza o gráfico no pygame
     self.canvas_media_velocidade.draw()
@@ -81,7 +108,7 @@ class MetricasQRLink:
 
 
   def existem_dados(self):
-    return len(self.lista) > 0
+    return len(self.dados['Tempo']) > 0
 
 
 

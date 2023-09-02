@@ -129,6 +129,8 @@ while running:
 
                 imagem_qrcode = qr_code_util.criar_qrcode(gerar_buffer_randomico(payload), qrcode_version)
 
+            elif evento.key == pygame.K_SPACE:
+                print (metricas.dados_mbps)
                 
       
 
