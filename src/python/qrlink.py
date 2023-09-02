@@ -198,12 +198,14 @@ class TelaQRLink:
         # Fill the screen with white color
         self.tela.fill((0, 0, 0))
 
+        (taxa, qrcode_segundo) = self.metricas.taxa_transmissao()
 
         texto = \
             f"Version( {self.qrcode_version} ) - " + \
             f"Payload( {self.payload} ) - " + \
             f"Box size( {self.box_size} ) -" + \
-            f"Taxa( {self.metricas.taxa_transmissao()} Mbps )"
+            f"Taxa( {taxa} Mbps ) -" + \
+            f"QRCode/segundo( {qrcode_segundo} )"
 
         texto_pygame = self.fonte.render(texto, True, (255, 255, 255))
         (largura_texto, altura_texto) = texto_pygame.get_size()
@@ -238,8 +240,6 @@ class TelaQRLink:
 
         # Crie uma nova superfície com o novo tamanho
         imagem_camera_redimensionada = self.redimensionar(imagem_camera, largura_camera)
-
-        print (f'origial ({imagem_camera.get_width()}) --- largura_camera: {largura_camera}  --- largura redimensionada: {imagem_camera_redimensionada.get_width()}')
 
         # Desenha a imagem da câmera na tela encostada no QRCode
         self.tela.blit(imagem_camera_redimensionada, (x_qrcode - imagem_camera_redimensionada.get_width(), altura_texto))

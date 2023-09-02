@@ -23,7 +23,7 @@ class QRCodeUtil:
             version=qrcode_version,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
             box_size=box_size,
-            border=10,
+            border=5,
         )
         qr.add_data(conteudo)
         qr.make(fit=True)

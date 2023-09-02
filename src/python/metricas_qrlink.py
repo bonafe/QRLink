@@ -132,6 +132,7 @@ class MetricasQRLink:
 
       janela_tempo = 10 
       taxa_transmissao = 0
+      qrcodes_segundo = 0
 
       inicio_janela = max(self.dados['Tempo']) - janela_tempo
       fim_janela = inicio_janela + janela_tempo
@@ -145,11 +146,10 @@ class MetricasQRLink:
         tamanho_total = np.sum(payloads) * 8
         tempo_total = fim_janela - inicio_janela
         taxa_transmissao = tamanho_total / tempo_total    
-
-        print (f'leituras: {len(self.dados["Tempo"])} --- tamanho_total: {tamanho_total} --- tempo_total: {tempo_total} --- taxa_transmissao: {taxa_transmissao}')                
+        qrcodes_segundo = len(dados_janela) / tempo_total
       
 
-      return taxa_transmissao
+      return (taxa_transmissao, qrcodes_segundo)
 
 
   def gerar_lista_medias(self):
