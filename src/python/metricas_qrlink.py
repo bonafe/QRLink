@@ -11,9 +11,6 @@ import matplotlib.animation as animation
 # matplotlib.backends.backend_agg.FigureCanvasAgg: biblioteca para renderizar gráficos
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-# pandas: biblioteca para manipulação de dados
-import pandas as pd
-
 # numpy: biblioteca para manipulação de matrizes
 import numpy as np
 
@@ -59,9 +56,7 @@ class MetricasQRLink:
 
 
   def adicionar_leitura(self, tempo, payload, qrcode_version):
-    
-    print (f'Adicionando leitura: {tempo} --- Payload: {payload} --- QRCode Mode: {qrcode_version}')
-
+        
     self.dados['Tempo'].append(tempo)
     self.dados['Payload'].append(payload)
     self.dados['QRCode Mode'].append(qrcode_version)
