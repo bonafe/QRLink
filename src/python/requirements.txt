@@ -1,0 +1,7 @@
+opencv-python
+qrcode
+pyzbar
+pygame
+pandas
+numpy
+matplotlib
