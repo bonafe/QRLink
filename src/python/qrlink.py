@@ -1,10 +1,13 @@
 
-import cv2
 
+import pygame
 
 import numpy as np
+
 from qrcode import QRCode
-import pygame
+
+import cv2
+
 
 from io import BytesIO
 import tempfile
@@ -15,6 +18,9 @@ import time
 import datetime
 
 
+
+from tela import TelaQRLink
+
 from camera import Camera
 
 from metricas_qrlink import MetricasQRLink
@@ -23,63 +29,77 @@ from qr_code_util import QRCodeUtil
 
 
 
-def gerar_buffer_randomico(tamanho):
 
-    buffer = bytearray()
-
-    for _ in range(tamanho):
-        buffer.append(random.randint(0, 255))
-
-    return bytes(buffer)
+class QRLink:
 
 
 
-class TelaQRLink:
+    def __init__(self):    
 
-    
-
-    def __init__(self, largura, altura):
-
-        self.largura = largura
-        self.altura = altura
-        
-
+        # Informações sobre o QRCode utilizado no momento
         self.payload = 512
+        
         self.qrcode_version = 10 
-        self.box_size = 10       
+        
+        self.box_size = 10   
 
+
+        # Métricas de desempenho
         self.metricas = MetricasQRLink()
+
+        # Câmera
         self.camera = Camera()
+
+        # Gerador e Leitor de QRCode
         self.qr_code_util = QRCodeUtil()
 
-         # Main loop
-        self.running = True
-        
-        self.imagem_qrcode = self.qr_code_util.criar_qrcode(gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
 
+        self.imagem_qrcode = self.qr_code_util.criar_qrcode(self.gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
 
         self.tempo_anterior = time.time()
 
         self.taxa_transferencia = 0
 
-        self.iniciar_pygame()
+        
+        largura, altura = 2000, 1000 # Largura dobrada para acomodar ambas as imagens lado a lado
 
-        self.fonte = pygame.font.Font(None, 36)
+        self.tela = TelaQRLink(self, largura, altura)
+
+        self.tela.rodar(self.atualizar_elementos_tela)
 
 
 
 
+    def atualizar_elementos_tela(self):
+
+        self.imagem_camera = self.processar_imagem_camera()
+
+        self.imagem_grafico_dados = self.metricas.imagem_grafico_dados()
+
+        self.imagem_grafico_taxa_transmissao = self.metricas.imagem_grafico_taxa_transmissao()        
+
+        (self.taxa, self.qrcode_segundo) = self.metricas.taxa_transmissao()
+
+        self.atualizar_texto()
+
+        self.tela.atualizar(
+            imagem_camera=self.imagem_camera,
+            imagem_qrcode=self.imagem_qrcode,
+            imagem_grafico_dados=self.imagem_grafico_dados,
+            imagem_grafico_taxa_transmissao=self.imagem_grafico_taxa_transmissao,
+            texto_cabecalho=self.texto_cabecalho
+        )
 
 
-    def iniciar_pygame(self):
 
-        # Initialize pygame
-        pygame.init()
+    def atualizar_texto(self):
 
-        # Create a window
-        self.tela = pygame.display.set_mode((self.largura, self.altura), pygame.RESIZABLE)
-        pygame.display.set_caption("QR Code and Camera")
-
+        self.texto_cabecalho = \
+            f"Version( {self.qrcode_version} ) - " + \
+            f"Payload( {self.payload} ) - " + \
+            f"Box size( {self.box_size} ) -" + \
+            f"Taxa( {self.taxa} Mbps ) -" + \
+            f"QRCode/segundo( {self.qrcode_segundo} )"
 
 
 
@@ -87,63 +107,10 @@ class TelaQRLink:
 
         self.tempo_atual = time.time()
 
-        self.imagem_qrcode = self.qr_code_util.criar_qrcode(gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
+        self.imagem_qrcode = self.qr_code_util.criar_qrcode(self.gerar_buffer_randomico(self.payload), self.qrcode_version, self.box_size)
 
 
-
-
-    def verificar_input_usuario_e_eventos(self):
-
-        for evento in pygame.event.get():
-
-            if evento.type == pygame.QUIT:
-                self.running = False
-
-
-            elif evento.type == pygame.VIDEORESIZE:                
-
-                # Se o usuário redimensionar a janela, você pode tratar o evento aqui
-                (self.largura, self.altura) = evento.size
-
-
-            elif evento.type == pygame.KEYDOWN:
-
-                if evento.key == pygame.K_UP:
-                    
-                    # Aumenta box_size
-                    self.qrcode_version += 5
-
-                    self.gerar_qrcode()
-                    
-
-                elif evento.key == pygame.K_DOWN:
-
-                    # Diminui qrcode_version (com verificação para garantir que não seja menor que 1)
-                    self.qrcode_version = max(self.qrcode_version - 5, 1)
-
-                    self.gerar_qrcode()
-
-                    
-                elif evento.key == pygame.K_RIGHT:
-
-                    # Aumenta payload em incrementos de 128
-                    self.payload += 128
-
-                    self.gerar_qrcode()
-
-                    
-                elif evento.key == pygame.K_LEFT:
-                    
-                    # Diminui payload em incrementos de 128 (com verificação para garantir que não seja menor que 128)
-                    self.payload = max(self.payload - 128, 128)
-
-                    self.gerar_qrcode()
-
-
-                
-
-
-
+    
 
     def processar_imagem_camera(self):
 
@@ -172,147 +139,25 @@ class TelaQRLink:
 
             frame_pygame = pygame.surfarray.make_surface(frame_camera)
 
-            return frame_pygame
-            
+            return frame_pygame        
 
 
 
-    def rodar(self):
 
-        while self.running:
-            
-            self.renderizar()
+    def gerar_buffer_randomico(self, tamanho):
 
-        # Release the camera and quit pygame
-        self.camera.release()
-        pygame.quit()
-    
+        buffer = bytearray()
 
-    
+        for _ in range(tamanho):
+            buffer.append(random.randint(0, 255))
 
-    def renderizar(self):
-            
-        self.verificar_input_usuario_e_eventos()
-                    
+        return bytes(buffer)
 
-        # Fill the screen with white color
-        self.tela.fill((0, 0, 0))
 
-        (taxa, qrcode_segundo) = self.metricas.taxa_transmissao()
 
-        texto = \
-            f"Version( {self.qrcode_version} ) - " + \
-            f"Payload( {self.payload} ) - " + \
-            f"Box size( {self.box_size} ) -" + \
-            f"Taxa( {taxa} Mbps ) -" + \
-            f"QRCode/segundo( {qrcode_segundo} )"
 
-        texto_pygame = self.fonte.render(texto, True, (255, 255, 255))
-        (largura_texto, altura_texto) = texto_pygame.get_size()
-        self.tela.blit(texto_pygame, (self.largura/2-largura_texto/2 ,0))
-        
-        
+if __name__ == "__main__":
 
-
-        imagem_camera = self.processar_imagem_camera()
-
-
-        #QRCode ocupa metade da largura da tela
-        largura_qrcode = self.largura / 2
-
-        #Redimensiona a imagem do QRCode
-        imagem_qrcode_redimensionada = self.redimensionar(self.imagem_qrcode, largura_qrcode)    
-
-        #Posiciona o QRCode no canto superior direito
-        x_qrcode = self.largura - imagem_qrcode_redimensionada.get_width()
-
-        #Logo abaixo da mensagem de texto
-        y_qrcode = altura_texto
-
-        #Desenha o QRCode na tela
-        self.tela.blit(imagem_qrcode_redimensionada, (x_qrcode, y_qrcode))
-
-
-
-
-        # 1/3 da metade da largura da tela
-        largura_camera = (self.largura / 2) // 3        
-
-        # Crie uma nova superfície com o novo tamanho
-        imagem_camera_redimensionada = self.redimensionar(imagem_camera, largura_camera)
-
-        # Desenha a imagem da câmera na tela encostada no QRCode
-        self.tela.blit(imagem_camera_redimensionada, (x_qrcode - imagem_camera_redimensionada.get_width(), altura_texto))
-
-
-
-        #Posicionar os gráficos verticalmente
-        y = altura_texto
-        
-        # 2/3 da metade da largura da tela
-        largura_grafico = ((self.largura/2)/3)*2
-
-        imagem_grafico_dados = self.metricas.imagem_grafico_dados()
-
-        imagem_grafico_dados_redimensionada = self.redimensionar(imagem_grafico_dados, largura_grafico)
-
-        self.tela.blit(imagem_grafico_dados_redimensionada, (0, y))
-    
-        y = y + imagem_grafico_dados_redimensionada.get_height() + 10
-
-
-        imagem_grafico_taxa_transmissao = self.metricas.imagem_grafico_taxa_transmissao()
-
-        imagem_grafico_taxa_transmissao_redimensionada = self.redimensionar(imagem_grafico_taxa_transmissao, largura_grafico)
-
-        self.tela.blit(imagem_grafico_taxa_transmissao_redimensionada, (0, y))
-
-        y = y + imagem_grafico_taxa_transmissao_redimensionada.get_height() + 10
-
-
-
-
-
-        # Update the screen
-        pygame.display.flip()
-
-
-    
-
-    def redimensionar(self, imagem, largura, altura=None, manter_proporcao=True):
-
-        if manter_proporcao:
-
-            altura = int(imagem.get_height() * largura / imagem.get_width())
-
-            if altura > self.altura:
-
-                altura = self.altura
-
-                largura = int(imagem.get_width() * altura / imagem.get_height())
-
-
-        # Redimensione a superfície original para a nova superfície
-        imagem_redimensionada = pygame.transform.scale(imagem, (largura, altura))
-
-        return imagem_redimensionada
-
-
-
-
-
-
-
-# Set window dimensions
-largura, altura = 2000, 1000 # Largura dobrada para acomodar ambas as imagens lado a lado
-
-tela = TelaQRLink(largura, altura)
-
-tela.rodar()
-
-
-
-
-
+    QRLink()
 
 
