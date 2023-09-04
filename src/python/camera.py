@@ -1,15 +1,29 @@
+
+
+
+
 import cv2
+
+
 
 
 class Camera:
 
+
+
     def __init__(self, camera_id=0):
+
+
         self.camera_id = camera_id
+
         self.camera = cv2.VideoCapture(self.camera_id)
+
 
         # Verifique se a captura foi aberta com sucesso
         if not self.camera.isOpened():
+
             print("Erro ao abrir a câmera.")            
+            
             exit()
 
 
