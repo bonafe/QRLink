@@ -126,7 +126,7 @@ class MetricasQRLink:
   def taxa_transmissao(self):
      
     if not self.existem_dados():
-        return ([], []) 
+        return (0, 0) 
     
     else:
 

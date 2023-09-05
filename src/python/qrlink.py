@@ -55,7 +55,7 @@ class QRLink:
 
         self.tempo_anterior = time.time()
 
-        self.taxa_transferencia = 0
+        self.taxa = 0
 
         
         largura, altura = 2000, 1000 # Largura dobrada para acomodar ambas as imagens lado a lado
@@ -74,8 +74,6 @@ class QRLink:
         tempo_atual = time.time()
 
         diferenca_tempo = tempo_atual - self.tempo_anterior
-
-        self.taxa_transferencia = (tamanho * 8) / (diferenca_tempo * 1000000)  # Mbps                                  
 
         self.tempo_anterior = tempo_atual
 
@@ -96,7 +94,7 @@ class QRLink:
 
         self.imagem_grafico_taxa_transmissao = self.metricas.imagem_grafico_taxa_transmissao()        
 
-        (self.taxa, self.qrcode_segundo) = self.metricas.taxa_transmissao()
+        (self.taxa, self.qrcode_segundo) = self.metricas.taxa_transmissao()        
 
         self.atualizar_texto()
 
@@ -114,9 +112,9 @@ class QRLink:
 
         self.texto_cabecalho = \
             f"Version( {self.qrcode_version} ) - " + \
-            f"Payload( {self.payload} ) - " + \
+            f"Payload( {self.payload} bytes ) - " + \
             f"Box size( {self.box_size} ) -" + \
-            f"Taxa( {self.taxa} Mbps ) -" + \
+            f"Taxa( {round(self.taxa, 4)} Mbps ) -" + \
             f"QRCode/segundo( {self.qrcode_segundo} )"
 
 
