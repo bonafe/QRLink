@@ -55,6 +55,8 @@ class QRLink:
 
         self.tempo_anterior = time.time()
 
+        self.tempo_anterior_atualizacao = time.time()
+
         self.taxa = 0
 
         
@@ -88,6 +90,13 @@ class QRLink:
 
     def atualizar_elementos_tela(self):
 
+        tempo_atual = time.time()
+
+        diferenca_tempo = tempo_atual - self.tempo_anterior_atualizacao    
+
+        self.tempo_anterior_atualizacao = tempo_atual
+
+
         self.imagem_camera = self.camera.processar_imagem_camera(self.qrcode_recebido)
 
         self.imagem_grafico_dados = self.metricas.imagem_grafico_dados()
@@ -110,11 +119,17 @@ class QRLink:
 
     def atualizar_texto(self):
 
+        taxa_mb_s = self.payload * self.qrcode_segundo / 1000
+
+        megas_hora = taxa_mb_s * 3600 / 1000
+
+        gigabytes_dia = megas_hora * 24 / 1000
+
         self.texto_cabecalho = \
             f"Version( {self.qrcode_version} ) - " + \
             f"Payload( {self.payload} bytes ) - " + \
             f"Box size( {self.box_size} ) -" + \
-            f"Taxa( {round(self.taxa, 4)} Mbps ) -" + \
+            f"Taxa( {round(taxa_mb_s,2)} KB/s - {round(megas_hora,2)} MB/h - {round(gigabytes_dia,2)} GB/dia ) -" + \
             f"QRCode/segundo( {self.qrcode_segundo} )"
 
 
