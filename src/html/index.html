@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Viewer</title>
+
+    <script src="quagga.js"></script>
+</head>
+<body>
+    <h1>Webcam Viewer</h1>
+    <div id="webcam" height="500px" width="500px">
+
+    <script type="module">
+        import {WebcamViewer} from "./camera.js";
+
+                    // Uso da classe
+            const videoElement = document.getElementById("webcam"); // Substitua "video" pelo ID do elemento de vídeo em seu HTML
+            const webcamViewer = new WebcamViewer(videoElement);
+            
+            // Iniciar a webcam
+            //webcamViewer.start();
+            
+            // Para parar a visualização da webcam quando você terminar
+            // webcamViewer.stop();
+    </script>

@@ -48,7 +48,7 @@ class QRLink:
         self.metricas = MetricasQRLink()
 
         # Câmera
-        self.camera = Camera()
+        self.camera = Camera(0)
 
         # Gerador e Leitor de QRCode
         self.qr_code_util = QRCodeUtil()
