@@ -16,8 +16,8 @@ class QRCodeUtil:
 
 
 
-
-    def criar_qrcode(self, conteudo, qrcode_version, box_size):
+    @staticmethod
+    def criar_qrcode( conteudo, qrcode_version, box_size):
 
         qr = qrcode.QRCode(
             version=qrcode_version,
@@ -37,8 +37,8 @@ class QRCodeUtil:
 
 
 
-
-    def ler_qrcode(self, frame):
+    @staticmethod
+    def ler_qrcode(frame):
 
         # Converte o quadro OpenCV para grayscale
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

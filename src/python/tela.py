@@ -73,7 +73,7 @@ class TelaQRLink:
                 elif evento.key == pygame.K_DOWN:
 
                     # Diminui qrcode_version (com verificação para garantir que não seja menor que 1)
-                    self.qrlink.qrcode_version = max(self.qrcode_version - 5, 1)
+                    self.qrlink.qrcode_version = max(self.qrlink.qrcode_version - 5, 1)
 
                     self.qrlink.gerar_qrcode()
 
@@ -89,7 +89,7 @@ class TelaQRLink:
                 elif evento.key == pygame.K_LEFT:
                     
                     # Diminui payload em incrementos de 128 (com verificação para garantir que não seja menor que 128)
-                    self.qrlink.payload = max(self.payload - 128, 128)
+                    self.qrlink.payload = max(self.qrlink.payload - 128, 128)
 
                     self.qrlink.gerar_qrcode()
 

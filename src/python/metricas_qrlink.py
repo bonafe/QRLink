@@ -126,7 +126,7 @@ class MetricasQRLink:
   def taxa_transmissao(self):
      
     if not self.existem_dados():
-        return ([], []) 
+        return (0, 0) 
     
     else:
 
@@ -143,7 +143,7 @@ class MetricasQRLink:
 
         tempos, payloads = zip(*dados_janela)
 
-        tamanho_total = np.sum(payloads) * 8
+        tamanho_total = (np.sum(payloads) * 8 ) / 1000000
         tempo_total = fim_janela - inicio_janela
         taxa_transmissao = tamanho_total / tempo_total    
         qrcodes_segundo = len(dados_janela) / tempo_total
@@ -171,7 +171,7 @@ class MetricasQRLink:
               if dados_janela:
                   tempos, payloads = zip(*dados_janela)
 
-                  tamanho_total = np.sum(payloads) * 8
+                  tamanho_total = (np.sum(payloads) * 8) / 1000000
                   tempo_total = fim_janela - inicio_janela
                   velocidade = tamanho_total / tempo_total
                   
