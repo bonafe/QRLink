@@ -4,10 +4,14 @@
 
 import cv2
 
+import pygame
+
+
+from qr_code_util import QRCodeUtil
 
 
 
-class Camera:
+class CameraQRCode:
 
 
 
@@ -23,7 +27,7 @@ class Camera:
         if not self.camera.isOpened():
 
             print("Erro ao abrir a câmera.")            
-            
+
             exit()
 
 
@@ -47,3 +51,24 @@ class Camera:
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)        
 
             return frame_rgb
+
+
+
+    def processar_imagem_camera(self, callback):
+
+        # Capture a frame from the camera
+        frame_camera = self.capturar_frame()
+
+        if frame_camera is not None:
+            
+            # Tente ler um QR Code da imagem da câmera
+            qr_code_data = QRCodeUtil.ler_qrcode(cv2.cvtColor(frame_camera, cv2.COLOR_RGBA2BGR))
+
+            if qr_code_data:
+
+                callback(qr_code_data)                                                                            
+
+
+            frame_pygame = pygame.surfarray.make_surface(frame_camera)
+
+            return frame_pygame     
